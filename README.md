@@ -1,31 +1,36 @@
-# 🎸 Fender Digital • 🖥️ Interview Coding Exercise • ☁️ AWS
+# 🎸 Fender Digital • ☁️ AWS Coding Exercise
 
 ## 🌐 Overview
 You are developing the backend system for a music streaming platform. 
-This streaming platform will be based on subscriptions and plans where customers can select which plan they want to subscribe to and receive the benefits from that plan.
+This streaming platform will be based on subscriptions and plans where customers can select which plan they want to subscribe to.
 
 The backend system you are going to develop is designed around a serverless architecture using the Amazon Web Services (AWS) platform. 
-
 It is composed of an API Gateway with multiple endpoints, connected to a Lambda function which uses DynamoDB as the database.
-
-<center>
 
 | ![arch.svg](img/arch.svg)    | 
 | :--:                         | 
 | *Cloud architecture diagram* |
-
-</center>
 
 The system should be able to support two use cases.
 - Getting the subscription data for a user
 - Handle incoming subscription webhook events for creation, renewal and cancellation
 
 ## 📝 Task
-- Configure an API Gateway REST API using the AWS Console to expose the following endpoints, wired to a single Lambda function
+- Add the following endpoints to the `fender_digital_code_exercise` REST API using the API Gateway service in the AWS Console
     - `GET /api/v1/subscriptions/{userId}`
     - `POST /api/v1/webhooks/subscriptions`
 
+- Create a Lambda proxy integration for the endpoints which calls the `fender_digital_code_exercise` Lambda function
+
+- Create a deployment and stage for the `fender_digital_code_exercise` REST API
+
+- Create an API key and usage plan for the `fender_digital_code_exercise` REST API and connect it to the created stage
+
 - Write the code for the Lambda function to handle both operations
+
+- Deploy the code from your local environment to AWS using the provided deployment tools
+
+- Write end-to-end (E2E) tests for the subscription flow
 
 ## 🎯 Technical requirements
 - Each user can only have one active subscription at a time
@@ -40,7 +45,39 @@ The system should be able to support two use cases.
 
 - `PLAN` items must be created manually in the AWS Console DynamoDB service
 
+- The response of the `GET /api/v1/subscriptions/{userId}` should also contain the associated plan data
+
 ## 📌 Sample objects
+
+### `sub` DynamoDB item
+
+| Field name     | Description                                          | DynamoDB type |
+| :--            | :--                                                  | :--           |
+| `pk`           | Partition key of the item (e.g. `user:<userId>`)     | `String`      |
+| `sk`           | Sort key of the item (e.g. `sub:<subId>}`)           | `String`      |
+| `type`         | Item type (always `sub`)                             | `String`      |
+| `planSku`      | SKU of the subscription plan                         | `String`      |
+| `startDate`    | ISO-8601 string of subscription start datetime       | `Number`      |
+| `expiresAt`    | ISO-8601 string of subscription expiration datetime  | `String`      |
+| `canceledAt`   | ISO-8601 string of subscription cancelation datetime | `String`      |
+| `lastModified` | ISO-8601 string of last modified datetime            | `String`      |
+| `attributes `  | Extra attributes for the subscription (metadata)     | `Map`         |
+
+### `plan` DynamoDB item
+
+| Field name     | Description                                      | DynamoDB type |
+| :--            | :--                                              | :--           |
+| `pk`           | Partition key of the item                        | `String`      |
+| `sk`           | Sort key of the item                             | `String`      |
+| `type`         | Item type (always `plan`)                        | `String`      |
+| `name`         | Name of the plan                                 | `String`      |
+| `price`        | Price of the plan                                | `Number`      |
+| `currency`     | Currency of the plan price                       | `String`      |
+| `billingCycle` | Billing cycle of the plan (`monthy` or `yearly`) | `String`      |
+| `features`     | List of features (as strings)                    | `List`        |
+| `status`       | Status of the plan (`active` or `inactive`)      | `String`      |
+| `lastModified` | ISO-8601 string of last modified datetime        | `String`      |
+
 ### `GET /api/v1/subscriptions/{userId}` response
 
 ```json
@@ -132,29 +169,15 @@ The system should be able to support two use cases.
 }
 ```
 
-### `PLAN` DynamoDB item
-
-| Field name     | Description                                      | DynamoDB type  |
-| :--            | :--                                              | :--            |
-| `pk`           | Partition key of the item                        | `String`       |
-| `sk`           | Sort key of the item                             | `String`       |
-| `type`         | Item type (always `PLAN`)                        | `String`       |
-| `name`         | Name of the plan                                 | `String`       |
-| `price`        | Price of the plan                                | `Number`       |
-| `currency`     | Currency of the plan price                       | `String`       |
-| `billingCycle` | Billing cycle of the plan (`monthy` or `yearly`) | `String`       |
-| `features`     | List of features                                 | `List[String]` |
-| `status`       | Status of the plan (`active` or `inactive`)      | `String`       |
-| `lastModified` | ISO-8601 string of last modified datetime        | `String`       |
-
 ## ⚙️ Setting up
+### Prerequisites
+
+- A Unix-based OS (Linux distro, MacOS or WSL2)
+- AWS CLI v2 ([installation guide](https://docs.aws.amazon.com/cli/v1/userguide/cli-chap-install.html))
+
 ### ☁️ Configuring the AWS CLI
 
-Some steps in the coding exercise process require interaction with AWS through the AWS CLI. 
-
-If you do not have the AWS CLI installed, follow the [tutorial](https://docs.aws.amazon.com/cli/v1/userguide/cli-chap-install.html)
-
-You will need to create a new profile called `fender`. You can do so by running the following command and entering the variables.
+Some steps in the coding exercise process require interaction with AWS through the AWS CLI. You will need to create a new profile called `fender`. You can do so by running the following command and entering the variables.
 
 ```bash
 aws configure --profile fender
@@ -179,9 +202,7 @@ You should see a function called `fender_digital_code_exercise`
 
 To manage environment variables, create a `.env` file in the root directory of the repository. This file will be used to sync the Lambda runtime environment variables when deployed.
 
-The `.env` file MUST follow the traditional convention of KEY=VALUE in order for the deployment to work. 
-
-Here's an example:
+The `.env` file MUST follow the traditional convention of KEY=VALUE in order for the deployment to work. Here's an example:
 
 ```sh
 VARIABLE_ONE=Hello

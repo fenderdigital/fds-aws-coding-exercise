@@ -1,3 +1,5 @@
+#!/bin/bash
+
 mkdir .temp
 
 cd app/go

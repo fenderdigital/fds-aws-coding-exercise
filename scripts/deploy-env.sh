@@ -1,10 +1,14 @@
+#!/bin/bash
+
 ENV_VARS=""
 
-while IFS='=' read -r key value; do
+while IFS='=' read -r key value || [[ -n "$key" ]]; do
+    # Skip empty lines and comments
     if [[ -z "$key" || "$key" =~ ^# ]]; then
         continue
     fi
-    
+
+    # Build the comma-separated string
     if [[ -z "$ENV_VARS" ]]; then
         ENV_VARS="${key}=${value}"
     else

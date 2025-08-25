@@ -1,3 +1,5 @@
+#!/bin/bash
+
 mkdir .temp
 mkdir .temp/package
 

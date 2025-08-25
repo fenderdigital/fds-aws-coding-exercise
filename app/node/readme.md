@@ -1,4 +1,4 @@
-# Node.js 🐢🚀
+# Node.js 🐢 🚀
 
 ## 💻 Development
 Inside of this directory, you will see a `src/` sub-directory with an `index.js` file. This will be your entrypoint for developing your code.
