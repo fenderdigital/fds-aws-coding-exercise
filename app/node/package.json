@@ -1,0 +1,9 @@
+{
+  "name": "fds-aws-coding-exercise",
+  "version": "1.0.0",
+  "description": "Node.js ",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js"
+}
