@@ -1,16 +1,27 @@
-# 🎸 Fender Digital - 🖥️ Interview Coding Exercise - ☁️ AWS
+# 🎸 Fender Digital • 🖥️ Interview Coding Exercise • ☁️ AWS
 
 ## 🌐 Overview
-You are developing the backend system for a music streaming platform. This streaming platform will be based on subscriptions and plans where customers can select which plan they want to subscribe to and receive the benefits from that plan.
+You are developing the backend system for a music streaming platform. 
+This streaming platform will be based on subscriptions and plans where customers can select which plan they want to subscribe to and receive the benefits from that plan.
 
-The backend system you are going to develop is designed around a serverless architecture using the Amazon Web Services platform. It is composed of an API Gateway, connected to a Lambda function which uses DynamoDB as the database.
+The backend system you are going to develop is designed around a serverless architecture using the Amazon Web Services (AWS) platform. 
+
+It is composed of an API Gateway with multiple endpoints, connected to a Lambda function which uses DynamoDB as the database.
+
+<center>
+
+| ![arch.svg](img/arch.svg)    | 
+| :--:                         | 
+| *Cloud architecture diagram* |
+
+</center>
 
 The system should be able to support two use cases.
 - Getting the subscription data for a user
 - Handle incoming subscription webhook events for creation, renewal and cancellation
 
 ## 📝 Task
-- Configure an API Gateway REST API to expose the following endpoints, wired to a single Lambda function
+- Configure an API Gateway REST API using the AWS Console to expose the following endpoints, wired to a single Lambda function
     - `GET /api/v1/subscriptions/{userId}`
     - `POST /api/v1/webhooks/subscriptions`
 
@@ -18,15 +29,21 @@ The system should be able to support two use cases.
 
 ## 🎯 Technical requirements
 - Each user can only have one active subscription at a time
+
 - The subscription `status` field must be derived from the data using the following rules:
-    - The status is ACTIVE if the `canceledAt` field is not set
-    - The status is PENDING if the `canceledAt` field is set, but current date is before the `expiresAt` date
-    - The status is CANCELED if the `canceledAt` field is set, and current date is after the `expiresAt` date
+
+    - The status is `ACTIVE` if the `canceledAt` field is not set
+    - The status is `PENDING` if the `canceledAt` field is set, but current date is before the `expiresAt` date
+    - The status is `CANCELED` if the `canceledAt` field is set, and current date is after the `expiresAt` date
+
 - Subscriptions cannot be created for plans with `INACTIVE` status
 
+- `PLAN` items must be created manually in the AWS Console DynamoDB service
+
 ## 📌 Sample objects
-`GET /api/v1/subscriptions/{userId}` response
-```
+### `GET /api/v1/subscriptions/{userId}` response
+
+```json
 {
   "userId": "123",
   "subscriptionId": "sub_456789",
@@ -51,7 +68,8 @@ The system should be able to support two use cases.
 }
 ```
 
-`POST /api/v1/webhooks/subscriptions` request body
+### `POST /api/v1/webhooks/subscriptions` request body
+
 - Subscription creation event (`subscription.created`)
 ```json
 {
@@ -114,8 +132,23 @@ The system should be able to support two use cases.
 }
 ```
 
+### `PLAN` DynamoDB item
+
+| Field name     | Description                                      | DynamoDB type  |
+| :--            | :--                                              | :--            |
+| `pk`           | Partition key of the item                        | `String`       |
+| `sk`           | Sort key of the item                             | `String`       |
+| `type`         | Item type (always `PLAN`)                        | `String`       |
+| `name`         | Name of the plan                                 | `String`       |
+| `price`        | Price of the plan                                | `Number`       |
+| `currency`     | Currency of the plan price                       | `String`       |
+| `billingCycle` | Billing cycle of the plan (`monthy` or `yearly`) | `String`       |
+| `features`     | List of features                                 | `List[String]` |
+| `status`       | Status of the plan (`active` or `inactive`)      | `String`       |
+| `lastModified` | ISO-8601 string of last modified datetime        | `String`       |
+
 ## ⚙️ Setting up
-### Configuring the AWS CLI
+### ☁️ Configuring the AWS CLI
 
 Some steps in the coding exercise process require interaction with AWS through the AWS CLI. 
 
@@ -142,7 +175,7 @@ aws lambda list-functions --profile fender
 
 You should see a function called `fender_digital_code_exercise`
 
-### Environment variables
+### 🌳 Environment variables
 
 To manage environment variables, create a `.env` file in the root directory of the repository. This file will be used to sync the Lambda runtime environment variables when deployed.
 
@@ -154,14 +187,14 @@ Here's an example:
 VARIABLE_ONE=Hello
 VARIABLE_TWO=World!
 
-# Comments and spaces are allowed!
+# Comments and newlines are allowed
 ANOTHER_ONE=foo
 
 LAST_ONE=bar
 ```
 
-## 🚀 Development and deployment
-### Developing your solution
+## 🖥️ Development and deployment
+### 🧠 Developing your solution
 We provide detailed instructions on development for the following languages.
 
 - [Python](/app/python/readme.md)
@@ -170,7 +203,7 @@ We provide detailed instructions on development for the following languages.
 
 If you want to use a different language, create a new folder in the `app` directory and manage it however you want.
 
-### Deploying to AWS
+### 🚀 Deploying to AWS
 The first step is to deploy any environment variables to the Lambda runtime.
 Make sure you have a `.env` file in the repository root and run the following command.
 
