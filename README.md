@@ -1,4 +1,4 @@
-# 🎸 Fender Digital • ☁️ AWS Coding Exercise
+# 🎸 Fender Digital • AWS Coding Exercise ☁️
 
 ## 🌐 Overview
 You are developing the backend system for a music streaming platform. 
@@ -170,11 +170,10 @@ The system should be able to support two use cases.
 ```
 
 ## ⚙️ Setting up
-### Prerequisites
+### ⏮️ Prerequisites
 
 - A Unix-based OS (Linux distro, MacOS or WSL2)
 - AWS CLI v2 ([installation guide](https://docs.aws.amazon.com/cli/v1/userguide/cli-chap-install.html))
-
 ### ☁️ Configuring the AWS CLI
 
 Some steps in the coding exercise process require interaction with AWS through the AWS CLI. You will need to create a new profile called `fender`. You can do so by running the following command and entering the variables.
@@ -202,7 +201,7 @@ You should see a function called `fender_digital_code_exercise`
 
 To manage environment variables, create a `.env` file in the root directory of the repository. This file will be used to sync the Lambda runtime environment variables when deployed.
 
-The `.env` file MUST follow the traditional convention of KEY=VALUE in order for the deployment to work. Here's an example:
+The `.env` file MUST follow the traditional convention of `KEY=VALUE` in order for the deployment to work. Here's an example:
 
 ```sh
 VARIABLE_ONE=Hello

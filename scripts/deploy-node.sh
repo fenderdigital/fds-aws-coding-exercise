@@ -23,7 +23,6 @@ aws lambda update-function-configuration \
 aws lambda update-function-code \
     --profile "fender" \
     --function-name fender_digital_code_exercise \
-    --zip-file fileb://.temp/package.zip \
-    --publish
+    --zip-file fileb://.temp/package.zip
 
 rm -rf .temp
