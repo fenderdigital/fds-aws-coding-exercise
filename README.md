@@ -95,7 +95,7 @@ The system should be able to support two use cases.
     "Ad Free"
   ],
   "startDate": "2024-03-20T10:00:00Z",
-  "expiryDate": "2024-04-20T10:00:00Z",
+  "expiresAt": "2024-04-20T10:00:00Z",
   "cancelledAt": null,
   "status": "ACTIVE",
   "attributes": {
@@ -118,7 +118,7 @@ The system should be able to support two use cases.
   "paymentId": "pm_123456",
   "userId": "123",
   "customerId": "cus_789012",
-  "expiryDate": "2024-04-20T10:00:00Z",
+  "expiresAt": "2024-04-20T10:00:00Z",
   "metadata": {
     "planSku": "PREMIUM_MONTHLY",
     "autoRenew": true,
@@ -138,7 +138,7 @@ The system should be able to support two use cases.
   "paymentId": "pm_654321",
   "userId": "123",
   "customerId": "cus_789012",
-  "expiryDate": "2024-05-20T10:00:00Z",
+  "expiresAt": "2024-05-20T10:00:00Z",
   "metadata": {
     "planSku": "PREMIUM_MONTHLY",
     "autoRenew": true,
@@ -158,7 +158,7 @@ The system should be able to support two use cases.
   "paymentId": null,
   "userId": "123",
   "customerId": "cus_789012",
-  "expiryDate": "2024-05-20T10:00:00Z",
+  "expiresAt": "2024-05-20T10:00:00Z",
   "cancelledAt": "2024-05-20T10:00:00Z",
   "metadata": {
     "planSku": "PREMIUM_MONTHLY",
