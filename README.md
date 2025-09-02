@@ -37,13 +37,13 @@ The system should be able to support two use cases.
 
 - The subscription `status` field must be derived from the data using the following rules:
 
-    - The status is `ACTIVE` if the `canceledAt` field is not set
-    - The status is `PENDING` if the `canceledAt` field is set, but current date is before the `expiresAt` date
-    - The status is `CANCELED` if the `canceledAt` field is set, and current date is after the `expiresAt` date
+    - The status is `active` if the `canceledAt` field is not set
+    - The status is `pending` if the `cancelledAt` field is set, but current date is before the `expiresAt` date
+    - The status is `cancelled` if the `cancelledAt` field is set, and current date is after the `expiresAt` date
 
-- Subscriptions cannot be created for plans with `INACTIVE` status
+- Subscriptions cannot be created for plans with `inactive` status
 
-- `PLAN` items must be created manually in the AWS Console DynamoDB service
+- `plan` items must be created manually in the AWS Console DynamoDB service
 
 - The response of the `GET /api/v1/subscriptions/{userId}` should also contain the associated plan data
 
@@ -51,32 +51,32 @@ The system should be able to support two use cases.
 
 ### `sub` DynamoDB item
 
-| Field name     | Description                                          | DynamoDB type |
-| :--            | :--                                                  | :--           |
-| `pk`           | Partition key of the item (e.g. `user:<userId>`)     | `String`      |
-| `sk`           | Sort key of the item (e.g. `sub:<subId>}`)           | `String`      |
-| `type`         | Item type (always `sub`)                             | `String`      |
-| `planSku`      | SKU of the subscription plan                         | `String`      |
-| `startDate`    | ISO-8601 string of subscription start datetime       | `Number`      |
-| `expiresAt`    | ISO-8601 string of subscription expiration datetime  | `String`      |
-| `canceledAt`   | ISO-8601 string of subscription cancelation datetime | `String`      |
-| `lastModified` | ISO-8601 string of last modified datetime            | `String`      |
-| `attributes `  | Extra attributes for the subscription (metadata)     | `Map`         |
+| Field name       | Description                                          | DynamoDB type |
+| :--              | :--                                                  | :--           |
+| `pk`             | Partition key of the item (e.g. `user:<userId>`)     | `String`      |
+| `sk`             | Sort key of the item (e.g. `sub:<subId>}`)           | `String`      |
+| `type`           | Item type (always `sub`)                             | `String`      |
+| `planSku`        | SKU of the subscription plan                         | `String`      |
+| `startDate`      | ISO-8601 string of subscription start datetime       | `String`      |
+| `expiresAt`      | ISO-8601 string of subscription expiration datetime  | `String`      |
+| `canceledAt`     | ISO-8601 string of subscription cancelation datetime | `String`      |
+| `lastModifiedAt` | ISO-8601 string of last modified datetime            | `String`      |
+| `attributes `    | Extra attributes for the subscription (metadata)     | `Map`         |
 
 ### `plan` DynamoDB item
 
-| Field name     | Description                                      | DynamoDB type |
-| :--            | :--                                              | :--           |
-| `pk`           | Partition key of the item                        | `String`      |
-| `sk`           | Sort key of the item                             | `String`      |
-| `type`         | Item type (always `plan`)                        | `String`      |
-| `name`         | Name of the plan                                 | `String`      |
-| `price`        | Price of the plan                                | `Number`      |
-| `currency`     | Currency of the plan price                       | `String`      |
-| `billingCycle` | Billing cycle of the plan (`monthy` or `yearly`) | `String`      |
-| `features`     | List of features (as strings)                    | `List`        |
-| `status`       | Status of the plan (`active` or `inactive`)      | `String`      |
-| `lastModified` | ISO-8601 string of last modified datetime        | `String`      |
+| Field name       | Description                                      | DynamoDB type |
+| :--              | :--                                              | :--           |
+| `pk`             | Partition key of the item (e.g. `plan:<sku>`).   | `String`      |
+| `sk`             | Sort key of the item (e.g. `meta`)               | `String`      |
+| `type`           | Item type (always `plan`)                        | `String`      |
+| `name`           | Name of the plan                                 | `String`      |
+| `price`          | Price of the plan                                | `Number`      |
+| `currency`       | Currency of the plan price                       | `String`      |
+| `billingCycle`   | Billing cycle of the plan (`monthy` or `yearly`) | `String`      |
+| `features`       | List of features (as strings)                    | `List`        |
+| `status`         | Status of the plan (`active` or `inactive`)      | `String`      |
+| `lastModifiedAt` | ISO-8601 string of last modified datetime        | `String`      |
 
 ### `GET /api/v1/subscriptions/{userId}` response
 
@@ -84,16 +84,18 @@ The system should be able to support two use cases.
 {
   "userId": "123",
   "subscriptionId": "sub_456789",
-  "sku": "PREMIUM_MONTHLY",
-  "name": "Premium Monthly",
-  "price": 9.99,
-  "currency": "USD",
-  "billingCycle": "MONTHLY",
-  "features": [
-    "HD Streaming",
-    "Offline Downloads",
-    "Ad Free"
-  ],
+  "plan": {
+    "sku": "PREMIUM_MONTHLY",
+    "name": "Premium Monthly",
+    "price": 9.99,
+    "currency": "USD",
+    "billingCycle": "MONTHLY",
+    "features": [
+      "HD Streaming",
+      "Offline Downloads",
+      "Ad Free"
+    ],
+  },
   "startDate": "2024-03-20T10:00:00Z",
   "expiresAt": "2024-04-20T10:00:00Z",
   "cancelledAt": null,
@@ -147,11 +149,11 @@ The system should be able to support two use cases.
 }
 ```
 
-- Subscription cancelation event (`subscription.canceled`)
+- Subscription cancelation event (`subscription.cancelled`)
 ```json
 {
   "eventId": "evt_456789123",
-  "eventType": "subscription.canceled",
+  "eventType": "subscription.cancelled",
   "timestamp": "2024-05-20T10:00:00Z",
   "provider": "STRIPE",
   "subscriptionId": "sub_456789",
@@ -174,6 +176,10 @@ The system should be able to support two use cases.
 
 - A Unix-based OS (Linux distro, MacOS or WSL2)
 - AWS CLI v2 ([installation guide](https://docs.aws.amazon.com/cli/v1/userguide/cli-chap-install.html))
+
+### 🍴 Setting up the repo
+To set up your local environment, start by creating a fork of this repository and cloning that into your local machine.
+
 ### ☁️ Configuring the AWS CLI
 
 Some steps in the coding exercise process require interaction with AWS through the AWS CLI. You will need to create a new profile called `fender`. You can do so by running the following command and entering the variables.
