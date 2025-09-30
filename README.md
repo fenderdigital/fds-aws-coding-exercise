@@ -1,36 +1,38 @@
 # 🎸 Fender Digital • AWS Coding Exercise ☁️
 
 ## 🌐 Overview
-You are developing the backend system for a music streaming platform. 
-This streaming platform will be based on subscriptions and plans where customers can select which plan they want to subscribe to.
+You are developing the backend system for a music streaming platform based on subscriptions and plans.
 
-The backend system you are going to develop is designed around a serverless architecture using the Amazon Web Services (AWS) platform. 
-It is composed of an API Gateway with multiple endpoints, connected to a Lambda function which uses DynamoDB as the database.
+**The AWS infrastructure is already provisioned for you.** You will receive access to a dedicated AWS account containing:
+- An empty Lambda function: `fender_digital_code_exercise` (you'll write and deploy the code)
+- A DynamoDB table for data storage
+- An API Gateway REST API: `fender_digital_code_exercise`
 
-| ![arch.svg](img/arch.svg)    | 
-| :--:                         | 
+| ![arch.svg](img/arch.svg)    |
+| :--:                         |
 | *Cloud architecture diagram* |
 
-The system should be able to support two use cases.
-- Getting the subscription data for a user
-- Handle incoming subscription webhook events for creation, renewal and cancellation
+## 📝 Your Task
 
-## 📝 Task
-- Add the following endpoints to the `fender_digital_code_exercise` REST API using the API Gateway service in the AWS Console
-    - `GET /api/v1/subscriptions/{userId}`
-    - `POST /api/v1/webhooks/subscriptions`
+**Write the Lambda function code** to support two operations:
+1. Get subscription data for a user
+2. Process subscription webhook events (creation, renewal, cancellation)
 
-- Create a Lambda proxy integration for the endpoints which calls the `fender_digital_code_exercise` Lambda function
+**Configure API Gateway** to expose the following endpoints:
+- `GET /api/v1/subscriptions/{userId}`
+- `POST /api/v1/webhooks/subscriptions`
 
-- Create a deployment and stage for the `fender_digital_code_exercise` REST API
+**Deploy your code** using the provided deployment scripts.
 
-- Create an API key and usage plan for the `fender_digital_code_exercise` REST API and connect it to the created stage
+**Write E2E tests** to validate the subscription flow.
 
-- Write the code for the Lambda function to handle both operations
-
-- Deploy the code from your local environment to AWS using the provided deployment tools
-
-- Write end-to-end (E2E) tests for the subscription flow
+### Detailed Steps
+1. Configure the API Gateway endpoints with Lambda proxy integration
+2. Create a deployment and stage for the REST API
+3. Create an API key and usage plan, and connect it to the stage
+4. Implement the Lambda function handler code
+5. Deploy your code using the provided scripts
+6. Test the complete subscription flow
 
 ## 🎯 Technical requirements
 - Each user can only have one active subscription at a time
