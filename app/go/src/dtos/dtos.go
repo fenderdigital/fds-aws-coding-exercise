@@ -8,7 +8,7 @@ type SubscriptionResponse struct {
 	ExpiresAt      string                    `json:"expiresAt"`
 	CancelledAt    *string                   `json:"cancelledAt"`
 	Status         SubStatus                 `json:"status"`
-	Attributes     map[string]interface{}    `json:"attributes"`
+	Attributes     map[string]any            `json:"attributes"`
 }
 
 type SubscriptionResponsePlan struct {
