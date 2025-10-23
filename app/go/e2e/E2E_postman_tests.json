@@ -1,0 +1,177 @@
+{
+  "info": {
+    "name": "Fender development Exercise",
+    "description": "E2E test Postman",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create subscription",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base}}/api/v1/webhooks/subscriptions",
+          "host": [
+            "{{base}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "webhooks",
+            "subscriptions"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"eventId\": \"evt_123456789\", \"eventType\": \"subscription.created\", \"timestamp\": \"2024-03-20T10:00:00Z\", \"provider\": \"STRIPE\", \"subscriptionId\": \"sub_456789\", \"paymentId\": \"pm_123456\", \"userId\": \"123\", \"customerId\": \"cus_789012\", \"expiresAt\": \"2024-04-20T10:00:00Z\", \"metadata\": {\"planSku\": \"PREMIUM_MONTHLY\", \"autoRenew\": true, \"paymentMethod\": \"CREDIT_CARD\"}}"
+        }
+      }
+    },
+    {
+      "name": "Get subscription (after create)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base}}/api/v1/subscriptions/123",
+          "host": [
+            "{{base}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "subscriptions",
+            "123"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Renew subscription",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base}}/api/v1/webhooks/subscriptions",
+          "host": [
+            "{{base}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "webhooks",
+            "subscriptions"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"eventId\": \"evt_123456789\", \"eventType\": \"subscription.renewed\", \"timestamp\": \"2024-04-20T10:00:00Z\", \"provider\": \"STRIPE\", \"subscriptionId\": \"sub_456789\", \"paymentId\": \"pm_122334\", \"userId\": \"123\", \"customerId\": \"cus_789012\", \"expiresAt\": \"2024-05-20T10:00:00Z\", \"metadata\": {\"planSku\": \"PREMIUM_MONTHLY\", \"autoRenew\": true, \"paymentMethod\": \"CREDIT_CARD\"}}"
+        }
+      }
+    },
+    {
+      "name": "Get subscription (after renew)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base}}/api/v1/subscriptions/123",
+          "host": [
+            "{{base}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "subscriptions",
+            "123"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cancel subscription",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{base}}/api/v1/webhooks/subscriptions",
+          "host": [
+            "{{base}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "webhooks",
+            "subscriptions"
+          ]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\"eventId\": \"evt_456789123\", \"eventType\": \"subscription.cancelled\", \"timestamp\": \"2024-05-20T10:00:00Z\", \"provider\": \"STRIPE\", \"subscriptionId\": \"sub_456789\", \"paymentId\": null, \"userId\": \"123\", \"customerId\": \"cus_789012\", \"expiresAt\": \"2024-05-20T10:00:00Z\", \"cancelledAt\": \"2024-05-20T10:00:00Z\", \"metadata\": {\"planSku\": \"PREMIUM_MONTHLY\", \"autoRenew\": false, \"paymentMethod\": \"CREDIT_CARD\", \"cancelReason\": \"USER_REQUESTED\"}}"
+        }
+      }
+    },
+    {
+      "name": "Get subscription (after cancel)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base}}/api/v1/subscriptions/123",
+          "host": [
+            "{{base}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "subscriptions",
+            "123"
+          ]
+        }
+      }
+    }
+  ]
+}
