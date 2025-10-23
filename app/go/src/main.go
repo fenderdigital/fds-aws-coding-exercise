@@ -17,35 +17,32 @@ import (
 	"github.com/fenderdigital/fds-aws-coding-exercise/src/handlers"
 )
 
-var (
-	tableName string
-	ddbCli    *ddb.Client
-)
+type LambdaHandler struct {
+	apiHandler *handlers.ApiHandler
+}
 
-func NewFromEnv(ctx context.Context) error {
-	tableName = os.Getenv("DDB_TABLE")
+func NewLambdaHandler(ctx context.Context) (*LambdaHandler, error) {
+	tableName := os.Getenv("DDB_TABLE")
 	if tableName == "" {
-		return fmt.Errorf("DDB_TABLE is required")
+		return nil, fmt.Errorf("DDB_TABLE is required")
 	}
 
 	cfg, err := config.LoadDefaultConfig(ctx)
 	if err != nil {
-		return fmt.Errorf("load aws config: %w", err)
+		return nil, fmt.Errorf("load aws config: %w", err)
 	}
 
-	ddbCli = ddb.NewFromConfig(cfg)
-
-	return nil
+	return &LambdaHandler{apiHandler: handlers.NewApiHandler(tableName, ddb.NewFromConfig(cfg))}, nil
 }
 
-func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (lh *LambdaHandler) handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	switch {
 	case req.HTTPMethod == "GET" && strings.HasPrefix(req.Path, "/api/v1/subscriptions/"):
 		userID := req.PathParameters["userId"]
 		if userID == "" {
 			return badRequest("missing userId"), nil
 		}
-		return handleGetSubscription(ctx, userID)
+		return lh.handleGetSubscription(ctx, userID)
 	case req.HTTPMethod == "POST" && req.Path == "/api/v1/webhooks/subscriptions":
 		var subEventReq dtos.SubscriptionRequest
 		if err := json.Unmarshal([]byte(req.Body), &subEventReq); err != nil {
@@ -53,11 +50,11 @@ func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 		}
 		switch subEventReq.EventType {
 		case "subscription.created":
-			return handleCreateSubscription(ctx, &subEventReq)
+			return lh.handleCreateSubscription(ctx, &subEventReq)
 		case "subscription.renewed":
-			return handleRenewSubscription(ctx, &subEventReq)
+			return lh.handleRenewSubscription(ctx, &subEventReq)
 		case "subscription.cancelled":
-			return handleCancelSubscription(ctx, &subEventReq)
+			return lh.handleCancelSubscription(ctx, &subEventReq)
 		default:
 			return badRequest("unknown event type"), nil
 		}
@@ -66,8 +63,8 @@ func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 	return notFound("route not found"), nil
 }
 
-func handleGetSubscription(ctx context.Context, userID string) (events.APIGatewayProxyResponse, error) {
-	subs, err := handlers.GetUserSubs(ctx, ddbCli, tableName, userID)
+func (lh *LambdaHandler) handleGetSubscription(ctx context.Context, userID string) (events.APIGatewayProxyResponse, error) {
+	subs, err := lh.apiHandler.GetUserSubs(ctx, userID)
 	if err != nil {
 		return serverErr(err), nil
 	}
@@ -75,16 +72,16 @@ func handleGetSubscription(ctx context.Context, userID string) (events.APIGatewa
 	return parseJSON(http.StatusOK, subs)
 }
 
-func handleCreateSubscription(ctx context.Context, req *dtos.SubscriptionRequest) (events.APIGatewayProxyResponse, error) {
-	err := handlers.CreateUserSub(ctx, ddbCli, tableName, req)
+func (lh *LambdaHandler) handleCreateSubscription(ctx context.Context, req *dtos.SubscriptionRequest) (events.APIGatewayProxyResponse, error) {
+	err := lh.apiHandler.CreateUserSub(ctx, req)
 	if err != nil {
 		return serverErr(err), nil
 	}
 	return parseJSON(http.StatusCreated, map[string]string{"status": "created"})
 }
 
-func handleRenewSubscription(ctx context.Context, req *dtos.SubscriptionRequest) (events.APIGatewayProxyResponse, error) {
-	err := handlers.RenewUserSub(ctx, ddbCli, tableName, req)
+func (lh *LambdaHandler) handleRenewSubscription(ctx context.Context, req *dtos.SubscriptionRequest) (events.APIGatewayProxyResponse, error) {
+	err := lh.apiHandler.RenewUserSub(ctx, req)
 	if err != nil {
 		return serverErr(err), nil
 	}
@@ -92,8 +89,8 @@ func handleRenewSubscription(ctx context.Context, req *dtos.SubscriptionRequest)
 	return parseJSON(http.StatusOK, map[string]string{"status": "renewed"})
 }
 
-func handleCancelSubscription(ctx context.Context, req *dtos.SubscriptionRequest) (events.APIGatewayProxyResponse, error) {
-	err := handlers.CancelUserSub(ctx, ddbCli, tableName, req)
+func (lh *LambdaHandler) handleCancelSubscription(ctx context.Context, req *dtos.SubscriptionRequest) (events.APIGatewayProxyResponse, error) {
+	err := lh.apiHandler.CancelUserSub(ctx, req)
 	if err != nil {
 		return serverErr(err), nil
 	}
@@ -102,11 +99,11 @@ func handleCancelSubscription(ctx context.Context, req *dtos.SubscriptionRequest
 
 func main() {
 	ctx := context.Background()
-	err := NewFromEnv(ctx)
+	lHandler, err := NewLambdaHandler(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}
-	lambda.Start(handler)
+	lambda.Start(lHandler.handler)
 }
 
 func parseJSON(code int, v any) (events.APIGatewayProxyResponse, error) {

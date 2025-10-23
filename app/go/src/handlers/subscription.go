@@ -22,15 +22,24 @@ var (
 	errMissingCanceledAt  = errors.New("missing canceledAt time to cancel subscription")
 )
 
-func GetUserSubs(ctx context.Context, ddbCli *ddb.Client, tableName, userID string) ([]*dtos.SubscriptionResponse, error) {
-	subs, err := getUserSubs(ctx, ddbCli, tableName, userID)
+type ApiHandler struct {
+	tableName string
+	ddbCli    *ddb.Client
+}
+
+func NewApiHandler(tableName string, ddbCli *ddb.Client) *ApiHandler {
+	return &ApiHandler{tableName: tableName, ddbCli: ddbCli}
+}
+
+func (ah *ApiHandler) GetUserSubs(ctx context.Context, userID string) ([]*dtos.SubscriptionResponse, error) {
+	subs, err := ah.getUserSubs(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
 	subResponses := make([]*dtos.SubscriptionResponse, 0, len(subs))
 	for _, sub := range subs {
-		plan, err := getPlan(ctx, ddbCli, tableName, sub.PlanSKU)
+		plan, err := ah.getPlan(ctx, sub.PlanSKU)
 		if err != nil {
 			return nil, err
 		}
@@ -66,8 +75,8 @@ func GetUserSubs(ctx context.Context, ddbCli *ddb.Client, tableName, userID stri
 	return subResponses, nil
 }
 
-func CreateUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, subReq *dtos.SubscriptionRequest) error {
-	plan, err := getPlan(ctx, ddbCli, tableName, asString(subReq.Metadata["planSku"]))
+func (ah *ApiHandler) CreateUserSub(ctx context.Context, subReq *dtos.SubscriptionRequest) error {
+	plan, err := ah.getPlan(ctx, asString(subReq.Metadata["planSku"]))
 	if err != nil {
 		return err
 	}
@@ -76,7 +85,7 @@ func CreateUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, su
 		return errActivePlan
 	}
 
-	subs, err := getUserSubs(ctx, ddbCli, tableName, subReq.UserID)
+	subs, err := ah.getUserSubs(ctx, subReq.UserID)
 	if err != nil {
 		return err
 	}
@@ -111,8 +120,8 @@ func CreateUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, su
 		return fmt.Errorf("failed to marshal item: %w", err)
 	}
 
-	_, err = ddbCli.PutItem(ctx, &ddb.PutItemInput{
-		TableName:           aws.String(tableName),
+	_, err = ah.ddbCli.PutItem(ctx, &ddb.PutItemInput{
+		TableName:           aws.String(ah.tableName),
 		Item:                av,
 		ConditionExpression: aws.String("attribute_not_exists(pk) AND attribute_not_exists(sk)"),
 	})
@@ -123,10 +132,10 @@ func CreateUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, su
 	return nil
 }
 
-func RenewUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, subReq *dtos.SubscriptionRequest) error {
+func (ah *ApiHandler) RenewUserSub(ctx context.Context, subReq *dtos.SubscriptionRequest) error {
 	pk, sk := userSubKey(subReq.UserID, subReq.SubscriptionID)
-	_, err := ddbCli.UpdateItem(ctx, &ddb.UpdateItemInput{
-		TableName: aws.String(tableName),
+	_, err := ah.ddbCli.UpdateItem(ctx, &ddb.UpdateItemInput{
+		TableName: aws.String(ah.tableName),
 		Key: map[string]types.AttributeValue{
 			"pk": &types.AttributeValueMemberS{Value: pk},
 			"sk": &types.AttributeValueMemberS{Value: sk},
@@ -146,13 +155,13 @@ func RenewUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, sub
 	return nil
 }
 
-func CancelUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, subReq *dtos.SubscriptionRequest) error {
+func (ah *ApiHandler) CancelUserSub(ctx context.Context, subReq *dtos.SubscriptionRequest) error {
 	if subReq.CanceledAt == nil || *subReq.CanceledAt == "" {
 		return errMissingCanceledAt
 	}
 	pk, sk := userSubKey(subReq.UserID, subReq.SubscriptionID)
-	_, err := ddbCli.UpdateItem(ctx, &ddb.UpdateItemInput{
-		TableName: aws.String(tableName),
+	_, err := ah.ddbCli.UpdateItem(ctx, &ddb.UpdateItemInput{
+		TableName: aws.String(ah.tableName),
 		Key: map[string]types.AttributeValue{
 			"pk": &types.AttributeValueMemberS{Value: pk},
 			"sk": &types.AttributeValueMemberS{Value: sk},
@@ -172,10 +181,10 @@ func CancelUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, su
 	return nil
 }
 
-func getUserSubs(ctx context.Context, ddbCli *ddb.Client, tableName, userID string) ([]*entities.SubscriptionItem, error) {
+func (ah *ApiHandler) getUserSubs(ctx context.Context, userID string) ([]*entities.SubscriptionItem, error) {
 	pk := "user:" + userID
-	out, err := ddbCli.Query(ctx, &ddb.QueryInput{
-		TableName:              aws.String(tableName),
+	out, err := ah.ddbCli.Query(ctx, &ddb.QueryInput{
+		TableName:              aws.String(ah.tableName),
 		KeyConditionExpression: aws.String("#pk = :pk"),
 		ExpressionAttributeNames: map[string]string{
 			"#pk": "pk",
@@ -200,10 +209,10 @@ func getUserSubs(ctx context.Context, ddbCli *ddb.Client, tableName, userID stri
 	return subs, nil
 }
 
-func getPlan(ctx context.Context, ddbCli *ddb.Client, tableName, sku string) (*entities.Plan, error) {
+func (ah *ApiHandler) getPlan(ctx context.Context, sku string) (*entities.Plan, error) {
 	pk, sk := planKey(sku)
-	out, err := ddbCli.GetItem(ctx, &ddb.GetItemInput{
-		TableName: aws.String(tableName),
+	out, err := ah.ddbCli.GetItem(ctx, &ddb.GetItemInput{
+		TableName: aws.String(ah.tableName),
 		Key: map[string]types.AttributeValue{
 			"pk": &types.AttributeValueMemberS{Value: pk},
 			"sk": &types.AttributeValueMemberS{Value: sk},
