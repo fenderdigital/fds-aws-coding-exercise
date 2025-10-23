@@ -2,7 +2,7 @@
 import { QueryCommand } from '@aws-sdk/lib-dynamodb'
 import { ddb, TABLE_NAME, createResponse } from '.'
 
-export const getHandler = async()=>{
+export const getHandler = async(userId)=>{
     try{
         const subscriptionQueryParams = {
             TableName: TABLE_NAME,
