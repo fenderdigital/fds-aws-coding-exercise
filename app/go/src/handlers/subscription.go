@@ -37,7 +37,7 @@ func GetUserSubs(ctx context.Context, ddbCli *ddb.Client, tableName, userID stri
 
 		subID := strings.TrimPrefix(sub.SK, "sub:")
 
-		status, err := getStatus(sub.CanceledAt, sub.ExpiresAt)
+		status, err := getStatus(sub.CancelledAt, sub.ExpiresAt)
 		if err != nil {
 			return nil, err
 		}
@@ -47,7 +47,7 @@ func GetUserSubs(ctx context.Context, ddbCli *ddb.Client, tableName, userID stri
 			SubscriptionID: subID,
 			StartDate:      sub.StartDate,
 			ExpiresAt:      sub.ExpiresAt,
-			CancelledAt:    sub.CanceledAt,
+			CancelledAt:    sub.CancelledAt,
 			Status:         status,
 			Attributes:     sub.Attributes,
 			Plan: &dtos.SubscriptionResponsePlan{
@@ -102,7 +102,7 @@ func CreateUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, su
 		PlanSKU:        planSKU,
 		StartDate:      start,
 		ExpiresAt:      subReq.ExpiresAt,
-		CanceledAt:     nil,
+		CancelledAt:    nil,
 		LastModifiedAt: time.Now().Format(time.RFC3339),
 		Attributes:     subReq.Metadata,
 	}
@@ -248,7 +248,7 @@ func planKey(sku string) (pk, sk string) {
 
 func hasActiveOrPending(subs []*entities.SubscriptionItem) (bool, error) {
 	for _, s := range subs {
-		st, err := getStatus(s.CanceledAt, s.ExpiresAt)
+		st, err := getStatus(s.CancelledAt, s.ExpiresAt)
 		if err != nil {
 			return false, err
 		}

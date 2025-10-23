@@ -7,7 +7,7 @@ type SubscriptionItem struct {
 	PlanSKU        string                 `dynamodbav:"planSku"`
 	StartDate      string                 `dynamodbav:"startDate"`
 	ExpiresAt      string                 `dynamodbav:"expiresAt"`
-	CanceledAt     *string                `dynamodbav:"canceledAt"`
+	CancelledAt    *string                `dynamodbav:"cancelledAt"`
 	LastModifiedAt string                 `dynamodbav:"lastModifiedAt"`
 	Attributes     map[string]interface{} `dynamodbav:"attributes"`
 }
