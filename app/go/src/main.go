@@ -3,10 +3,14 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"log"
+	"os"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-lambda-go/lambda"
+	"github.com/aws/aws-sdk-go-v2/config"
 	ddb "github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/fenderdigital/fds-aws-coding-exercise/src/dtos"
 	"github.com/fenderdigital/fds-aws-coding-exercise/src/handlers"
@@ -16,6 +20,22 @@ var (
 	tableName string
 	ddbCli    *ddb.Client
 )
+
+func NewFromEnv(ctx context.Context) error {
+	tableName = os.Getenv("DDB_TABLE")
+	if tableName == "" {
+		return fmt.Errorf("DDB_TABLE is required")
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx)
+	if err != nil {
+		return fmt.Errorf("load aws config: %w", err)
+	}
+
+	ddbCli = ddb.NewFromConfig(cfg)
+
+	return nil
+}
 
 func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	switch {
@@ -64,5 +84,10 @@ func handleCreateSubscription(ctx context.Context, req *dtos.SubscriptionRequest
 }
 
 func main() {
+	ctx := context.Background()
+	err := NewFromEnv(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 	lambda.Start(handler)
 }
