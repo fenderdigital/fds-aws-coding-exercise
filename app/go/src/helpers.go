@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 )
@@ -32,4 +33,12 @@ func serverErr(err error) events.APIGatewayProxyResponse {
 
 func notFound(msg string) events.APIGatewayProxyResponse {
 	return events.APIGatewayProxyResponse{StatusCode: 404, Body: fmt.Sprintf(`{"error":"%s"}`, msg)}
+}
+
+func requestErr(err error) events.APIGatewayProxyResponse {
+	// Maybe not the best error handling for now, update later to use errors.Is/errors.As if possible :)
+	if strings.Contains(err.Error(), "active/pending") {
+		return events.APIGatewayProxyResponse{StatusCode: 409, Body: fmt.Sprintf(`{"error":"%s"}`, err.Error())}
+	}
+	return events.APIGatewayProxyResponse{StatusCode: 422, Body: fmt.Sprintf(`{"error":"%s"}`, err.Error())}
 }

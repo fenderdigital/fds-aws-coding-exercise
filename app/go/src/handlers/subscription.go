@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -15,32 +16,18 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-func GetUserSubs(ctx context.Context, ddbCli *ddb.Client, tableName, userID string) ([]dtos.SubscriptionResponse, error) {
-	pk := "user:" + userID
-	out, err := ddbCli.Query(ctx, &ddb.QueryInput{
-		TableName:              aws.String(tableName),
-		KeyConditionExpression: aws.String("#pk = :pk"),
-		ExpressionAttributeNames: map[string]string{
-			"#pk": "pk",
-		},
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":pk": &types.AttributeValueMemberS{Value: pk},
-		},
-	})
+var (
+	errActivePlan         = errors.New("plan is active")
+	errActiveOrPendingSub = errors.New("user already has an active/pending subscription")
+)
+
+func GetUserSubs(ctx context.Context, ddbCli *ddb.Client, tableName, userID string) ([]*dtos.SubscriptionResponse, error) {
+	subs, err := getUserSubs(ctx, ddbCli, tableName, userID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query user subscription: %w", err)
+		return nil, err
 	}
 
-	subs := make([]entities.SubscriptionItem, 0, len(out.Items))
-	for _, it := range out.Items {
-		var s entities.SubscriptionItem
-		if err := attributevalue.UnmarshalMap(it, &s); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal subscription item: %w", err)
-		}
-		subs = append(subs, s)
-	}
-
-	subResponses := make([]dtos.SubscriptionResponse, 0, len(subs))
+	subResponses := make([]*dtos.SubscriptionResponse, 0, len(subs))
 	for _, sub := range subs {
 		plan, err := getPlan(ctx, ddbCli, tableName, sub.PlanSKU)
 		if err != nil {
@@ -72,10 +59,95 @@ func GetUserSubs(ctx context.Context, ddbCli *ddb.Client, tableName, userID stri
 			},
 		}
 
-		subResponses = append(subResponses, resp)
+		subResponses = append(subResponses, &resp)
 	}
 
 	return subResponses, nil
+}
+
+func CreateUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, subReq *dtos.SubscriptionRequest) error {
+	plan, err := getPlan(ctx, ddbCli, tableName, asString(subReq.Metadata["planSku"]))
+	if err != nil {
+		return err
+	}
+
+	if strings.ToLower(plan.Status) != "active" {
+		return errActivePlan
+	}
+
+	subs, err := getUserSubs(ctx, ddbCli, tableName, subReq.UserID)
+	if err != nil {
+		return err
+	}
+
+	isActiveOrPending, err := hasActiveOrPending(subs)
+	if err != nil {
+		return err
+	}
+
+	if isActiveOrPending {
+		return errActiveOrPendingSub
+	}
+
+	pk, sk := userSubKey(subReq.UserID, subReq.SubscriptionID)
+	start := subReq.Timestamp
+	planSKU := asString(subReq.Metadata["planSku"])
+
+	delete(subReq.Metadata, "planSku")
+	item := entities.SubscriptionItem{
+		PK:             pk,
+		SK:             sk,
+		Type:           "sub",
+		PlanSKU:        planSKU,
+		StartDate:      start,
+		ExpiresAt:      subReq.ExpiresAt,
+		CanceledAt:     nil,
+		LastModifiedAt: time.Now().Format(time.RFC3339),
+		Attributes:     subReq.Metadata,
+	}
+	av, err := attributevalue.MarshalMap(item)
+	if err != nil {
+		return fmt.Errorf("failed to marshal item: %w", err)
+	}
+
+	_, err = ddbCli.PutItem(ctx, &ddb.PutItemInput{
+		TableName:           aws.String(tableName),
+		Item:                av,
+		ConditionExpression: aws.String("attribute_not_exists(pk) AND attribute_not_exists(sk)"),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to insert subscription item: %w", err)
+	}
+
+	return nil
+}
+
+func getUserSubs(ctx context.Context, ddbCli *ddb.Client, tableName, userID string) ([]*entities.SubscriptionItem, error) {
+	pk := "user:" + userID
+	out, err := ddbCli.Query(ctx, &ddb.QueryInput{
+		TableName:              aws.String(tableName),
+		KeyConditionExpression: aws.String("#pk = :pk"),
+		ExpressionAttributeNames: map[string]string{
+			"#pk": "pk",
+		},
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk": &types.AttributeValueMemberS{Value: pk},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to query user subscription: %w", err)
+	}
+
+	subs := make([]*entities.SubscriptionItem, 0, len(out.Items))
+	for _, it := range out.Items {
+		var s entities.SubscriptionItem
+		if err := attributevalue.UnmarshalMap(it, &s); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal subscription item: %w", err)
+		}
+		subs = append(subs, &s)
+	}
+
+	return subs, nil
 }
 
 func getPlan(ctx context.Context, ddbCli *ddb.Client, tableName, sku string) (*entities.Plan, error) {
@@ -122,4 +194,31 @@ func getStatus(canceledAt *string, expiresAt string) (dtos.SubStatus, error) {
 
 func planKey(sku string) (pk, sk string) {
 	return "plan:" + sku, "meta"
+}
+
+func hasActiveOrPending(subs []*entities.SubscriptionItem) (bool, error) {
+	for _, s := range subs {
+		st, err := getStatus(s.CanceledAt, s.ExpiresAt)
+		if err != nil {
+			return false, err
+		}
+		if st == dtos.SubStatusActive || st == dtos.SubStatusPending {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func asString(v any) string {
+	if v == nil {
+		return ""
+	}
+	if s, ok := v.(string); ok {
+		return s
+	}
+	return fmt.Sprintf("%v", v)
+}
+
+func userSubKey(userID, subID string) (pk, sk string) {
+	return "user:" + userID, "sub:" + subID
 }

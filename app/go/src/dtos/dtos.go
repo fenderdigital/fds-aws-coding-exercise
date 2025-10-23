@@ -19,3 +19,17 @@ type SubscriptionResponsePlan struct {
 	BillingCycle string   `json:"billingCycle"`
 	Features     []string `json:"features"`
 }
+
+type SubscriptionRequest struct {
+	EventID        string         `json:"eventId"`
+	EventType      string         `json:"eventType"`
+	Timestamp      string         `json:"timestamp"`
+	Provider       string         `json:"provider"`
+	SubscriptionID string         `json:"subscriptionId"`
+	PaymentID      *string        `json:"paymentId"`
+	UserID         string         `json:"userId"`
+	CustomerID     string         `json:"customerId"`
+	ExpiresAt      string         `json:"expiresAt"`
+	CanceledAt     *string        `json:"cancelledAt"`
+	Metadata       map[string]any `json:"metadata"`
+}
