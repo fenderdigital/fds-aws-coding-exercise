@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 
@@ -41,15 +42,6 @@ func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 	switch {
 	case req.HTTPMethod == "GET" && strings.HasPrefix(req.Path, "/api/v1/subscriptions/"):
 		userID := req.PathParameters["userId"]
-		/*
-			if userID == "" {
-				parts := strings.Split(req.Path, "/")
-				if len(parts) >= 5 {
-					userID = parts[4]
-				}
-			}
-
-		*/
 		if userID == "" {
 			return badRequest("missing userId"), nil
 		}
@@ -62,6 +54,12 @@ func handler(ctx context.Context, req events.APIGatewayProxyRequest) (events.API
 		switch subEventReq.EventType {
 		case "subscription.created":
 			return handleCreateSubscription(ctx, &subEventReq)
+		case "subscription.renewed":
+			return handleRenewSubscription(ctx, &subEventReq)
+		case "subscription.cancelled":
+			return handleCancelSubscription(ctx, &subEventReq)
+		default:
+			return badRequest("unknown event type"), nil
 		}
 	}
 
@@ -74,13 +72,32 @@ func handleGetSubscription(ctx context.Context, userID string) (events.APIGatewa
 		return serverErr(err), nil
 	}
 
-	return parseJSON(subs)
+	return parseJSON(http.StatusOK, subs)
 }
 
 func handleCreateSubscription(ctx context.Context, req *dtos.SubscriptionRequest) (events.APIGatewayProxyResponse, error) {
 	err := handlers.CreateUserSub(ctx, ddbCli, tableName, req)
+	if err != nil {
+		return serverErr(err), nil
+	}
+	return parseJSON(http.StatusCreated, map[string]string{"status": "created"})
+}
 
-	return requestErr(err), nil
+func handleRenewSubscription(ctx context.Context, req *dtos.SubscriptionRequest) (events.APIGatewayProxyResponse, error) {
+	err := handlers.RenewUserSub(ctx, ddbCli, tableName, req)
+	if err != nil {
+		return serverErr(err), nil
+	}
+
+	return parseJSON(http.StatusOK, map[string]string{"status": "renewed"})
+}
+
+func handleCancelSubscription(ctx context.Context, req *dtos.SubscriptionRequest) (events.APIGatewayProxyResponse, error) {
+	err := handlers.CancelUserSub(ctx, ddbCli, tableName, req)
+	if err != nil {
+		return serverErr(err), nil
+	}
+	return parseJSON(http.StatusOK, map[string]string{"status": "cancelled"})
 }
 
 func main() {
@@ -92,13 +109,14 @@ func main() {
 	lambda.Start(handler)
 }
 
-func parseJSON(v any) (events.APIGatewayProxyResponse, error) {
+func parseJSON(code int, v any) (events.APIGatewayProxyResponse, error) {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return events.APIGatewayProxyResponse{}, fmt.Errorf("failed to marshal JSON: %w", err)
 	}
+
 	return events.APIGatewayProxyResponse{
-		StatusCode: 200,
+		StatusCode: code,
 		Headers:    map[string]string{"Content-Type": "application/json"},
 		Body:       string(b),
 	}, nil

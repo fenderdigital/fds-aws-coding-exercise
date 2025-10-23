@@ -19,6 +19,7 @@ import (
 var (
 	errActivePlan         = errors.New("plan is active")
 	errActiveOrPendingSub = errors.New("user already has an active/pending subscription")
+	errMissingCanceledAt  = errors.New("missing canceledAt time to cancel subscription")
 )
 
 func GetUserSubs(ctx context.Context, ddbCli *ddb.Client, tableName, userID string) ([]*dtos.SubscriptionResponse, error) {
@@ -80,12 +81,12 @@ func CreateUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, su
 		return err
 	}
 
-	isActiveOrPending, err := hasActiveOrPending(subs)
+	hasActiveOrPendingSub, err := hasActiveOrPending(subs)
 	if err != nil {
 		return err
 	}
 
-	if isActiveOrPending {
+	if hasActiveOrPendingSub {
 		return errActiveOrPendingSub
 	}
 
@@ -116,7 +117,56 @@ func CreateUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, su
 		ConditionExpression: aws.String("attribute_not_exists(pk) AND attribute_not_exists(sk)"),
 	})
 	if err != nil {
-		return fmt.Errorf("failed to insert subscription item: %w", err)
+		return fmt.Errorf("failed to create subscription: %w", err)
+	}
+
+	return nil
+}
+
+func RenewUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, subReq *dtos.SubscriptionRequest) error {
+	pk, sk := userSubKey(subReq.UserID, subReq.SubscriptionID)
+	_, err := ddbCli.UpdateItem(ctx, &ddb.UpdateItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]types.AttributeValue{
+			"pk": &types.AttributeValueMemberS{Value: pk},
+			"sk": &types.AttributeValueMemberS{Value: sk},
+		},
+		UpdateExpression: aws.String("SET expiresAt = :exp, lastModifiedAt = :now, attributes = :attrs REMOVE canceledAt"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":exp":   &types.AttributeValueMemberS{Value: subReq.ExpiresAt},
+			":now":   &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},
+			":attrs": parseMetadataAttributes(subReq.Metadata),
+		},
+		ConditionExpression: aws.String("attribute_exists(pk) AND attribute_exists(sk)"),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to renew subscription: %w", err)
+	}
+
+	return nil
+}
+
+func CancelUserSub(ctx context.Context, ddbCli *ddb.Client, tableName string, subReq *dtos.SubscriptionRequest) error {
+	if subReq.CanceledAt == nil || *subReq.CanceledAt == "" {
+		return errMissingCanceledAt
+	}
+	pk, sk := userSubKey(subReq.UserID, subReq.SubscriptionID)
+	_, err := ddbCli.UpdateItem(ctx, &ddb.UpdateItemInput{
+		TableName: aws.String(tableName),
+		Key: map[string]types.AttributeValue{
+			"pk": &types.AttributeValueMemberS{Value: pk},
+			"sk": &types.AttributeValueMemberS{Value: sk},
+		},
+		UpdateExpression: aws.String("SET cancelledAt = :canceled, lastModifiedAt = :now, attributes = :attrs"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":canceled": &types.AttributeValueMemberS{Value: *subReq.CanceledAt},
+			":now":      &types.AttributeValueMemberS{Value: time.Now().Format(time.RFC3339)},
+			":attrs":    parseMetadataAttributes(subReq.Metadata),
+		},
+		ConditionExpression: aws.String("attribute_exists(pk) AND attribute_exists(sk)"),
+	})
+	if err != nil {
+		return fmt.Errorf("failed to cancel subscription: %w", err)
 	}
 
 	return nil
@@ -221,4 +271,12 @@ func asString(v any) string {
 
 func userSubKey(userID, subID string) (pk, sk string) {
 	return "user:" + userID, "sub:" + subID
+}
+
+func parseMetadataAttributes(m map[string]any) types.AttributeValue {
+	av, err := attributevalue.Marshal(m)
+	if err != nil {
+		return &types.AttributeValueMemberM{Value: map[string]types.AttributeValue{}}
+	}
+	return av
 }
