@@ -1,0 +1,514 @@
+{
+	"info": {
+		"_postman_id": "1244362f-fd87-4055-8705-a4f79bc03b8d",
+		"name": "Fender",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "7708664"
+	},
+	"item": [
+		{
+			"name": "E2E Tests",
+			"item": [
+				{
+					"name": "POST - Create subscription - Test",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"POST created -> 200\", () => pm.response.to.have.status(200));\r",
+									"const jsonBody = pm.response.json();\r",
+									"pm.test(\"POST Body\",()=> {\r",
+									"    pm.expect(jsonBody.status).to.eql(\"ACTIVE\")\r",
+									"    pm.expect(jsonBody.planSku).to.eql(\"PREMIUM_MONTHLY\")\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"eventId\": \"evt_123456789\",\r\n  \"eventType\": \"subscription.created\",\r\n  \"timestamp\": \"2024-03-20T10:00:00Z\",\r\n  \"provider\": \"STRIPE\",\r\n  \"subscriptionId\": \"sub_456789\",\r\n  \"paymentId\": \"pm_123456\",\r\n  \"userId\": \"123\",\r\n  \"customerId\": \"cus_789012\",\r\n  \"expiresAt\": \"2024-04-20T10:00:00Z\",\r\n  \"metadata\": {\r\n    \"planSku\": \"PREMIUM_MONTHLY\",\r\n    \"autoRenew\": true,\r\n    \"paymentMethod\": \"CREDIT_CARD\"\r\n  }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{apiId}}.execute-api.{{region}}.amazonaws.com/{{stage}}/api/v1/webhooks/subscriptions",
+							"protocol": "https",
+							"host": [
+								"{{apiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"{{stage}}",
+								"api",
+								"v1",
+								"webhooks",
+								"subscriptions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET - User subscriptions - Verify create",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GET -> 200\", () => pm.response.to.have.status(200));\r",
+									"const jsonBody = pm.response.json();\r",
+									"pm.test(\"POST Body\",()=> {\r",
+									"    pm.expect(jsonBody.status).to.eql(\"ACTIVE\")\r",
+									"    pm.expect(jsonBody.plan.sku).to.eql(\"PREMIUM_MONTHLY\")\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "https://{{apiId}}.execute-api.{{region}}.amazonaws.com/{{stage}}/api/v1/subscriptions/{{userId}}",
+							"protocol": "https",
+							"host": [
+								"{{apiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"{{stage}}",
+								"api",
+								"v1",
+								"subscriptions",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST - Cancel subscription Copy",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"POST Cancel -> 200\", () => pm.response.to.have.status(200));\r",
+									"const jsonBody = pm.response.json();\r",
+									"pm.test(\"POST Body\",()=> {\r",
+									"    pm.expect(jsonBody.status).to.eql(\"CANCELED\")\r",
+									"    pm.expect(jsonBody.planSku).to.eql(\"PREMIUM_MONTHLY\")\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"eventId\": \"evt_456789123\",\r\n  \"eventType\": \"subscription.cancelled\",\r\n  \"timestamp\": \"2024-05-20T10:00:00Z\",\r\n  \"provider\": \"STRIPE\",\r\n  \"subscriptionId\": \"sub_456789\",\r\n  \"paymentId\": null,\r\n  \"userId\": \"123\",\r\n  \"customerId\": \"cus_789012\",\r\n  \"expiresAt\": \"2024-05-20T10:00:00Z\",\r\n  \"cancelledAt\": \"2024-05-20T10:00:00Z\",\r\n  \"metadata\": {\r\n    \"planSku\": \"PREMIUM_MONTHLY\",\r\n    \"autoRenew\": false,\r\n    \"paymentMethod\": \"CREDIT_CARD\",\r\n    \"cancelReason\": \"USER_REQUESTED\"\r\n  }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{apiId}}.execute-api.{{region}}.amazonaws.com/{{stage}}/api/v1/webhooks/subscriptions",
+							"protocol": "https",
+							"host": [
+								"{{apiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"{{stage}}",
+								"api",
+								"v1",
+								"webhooks",
+								"subscriptions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET - User subscriptions - Verify cancel",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GET -> 200\", () => pm.response.to.have.status(200));\r",
+									"const jsonBody = pm.response.json();\r",
+									"pm.test(\"POST Body\",()=> {\r",
+									"    pm.expect(Object.keys(jsonBody).length).to.eql(0)\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "https://{{apiId}}.execute-api.{{region}}.amazonaws.com/{{stage}}/api/v1/subscriptions/{{userId}}",
+							"protocol": "https",
+							"host": [
+								"{{apiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"{{stage}}",
+								"api",
+								"v1",
+								"subscriptions",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "POST - Renew subscription",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"POST Cancel -> 200\", () => pm.response.to.have.status(200));\r",
+									"const jsonBody = pm.response.json();\r",
+									"pm.test(\"POST Body\",()=> {\r",
+									"    pm.expect(jsonBody.status).to.eql(\"ACTIVE\")\r",
+									"    pm.expect(jsonBody.planSku).to.eql(\"PREMIUM_MONTHLY\")\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"eventId\": \"evt_987654321\",\r\n  \"eventType\": \"subscription.renewed\",\r\n  \"timestamp\": \"2024-04-20T10:00:00Z\",\r\n  \"provider\": \"STRIPE\",\r\n  \"subscriptionId\": \"sub_456789\",\r\n  \"paymentId\": \"pm_654321\",\r\n  \"userId\": \"123\",\r\n  \"customerId\": \"cus_789012\",\r\n  \"expiresAt\": \"2024-05-20T10:00:00Z\",\r\n  \"metadata\": {\r\n    \"planSku\": \"PREMIUM_MONTHLY\",\r\n    \"autoRenew\": true,\r\n    \"paymentMethod\": \"CREDIT_CARD\"\r\n  }\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://{{apiId}}.execute-api.{{region}}.amazonaws.com/{{stage}}/api/v1/webhooks/subscriptions",
+							"protocol": "https",
+							"host": [
+								"{{apiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"{{stage}}",
+								"api",
+								"v1",
+								"webhooks",
+								"subscriptions"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "GET - User subscriptions - Verify renew",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"GET -> 200\", () => pm.response.to.have.status(200));\r",
+									"const jsonBody = pm.response.json();\r",
+									"pm.test(\"POST Body\",()=> {\r",
+									"    pm.expect(jsonBody.status).to.eql(\"ACTIVE\")\r",
+									"    pm.expect(jsonBody.plan.sku).to.eql(\"PREMIUM_MONTHLY\")\r",
+									"})"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"protocolProfileBehavior": {
+						"disabledSystemHeaders": {}
+					},
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json",
+								"type": "text",
+								"disabled": true
+							}
+						],
+						"url": {
+							"raw": "https://{{apiId}}.execute-api.{{region}}.amazonaws.com/{{stage}}/api/v1/subscriptions/{{userId}}",
+							"protocol": "https",
+							"host": [
+								"{{apiId}}",
+								"execute-api",
+								"{{region}}",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"{{stage}}",
+								"api",
+								"v1",
+								"subscriptions",
+								"{{userId}}"
+							]
+						}
+					},
+					"response": []
+				}
+			],
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							""
+						]
+					}
+				}
+			]
+		},
+		{
+			"name": "POST - Create subscription",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"eventId\": \"evt_123456789\",\r\n  \"eventType\": \"subscription.created\",\r\n  \"timestamp\": \"2024-03-20T10:00:00Z\",\r\n  \"provider\": \"STRIPE\",\r\n  \"subscriptionId\": \"sub_456789\",\r\n  \"paymentId\": \"pm_123456\",\r\n  \"userId\": \"123\",\r\n  \"customerId\": \"cus_789012\",\r\n  \"expiresAt\": \"2024-04-20T10:00:00Z\",\r\n  \"metadata\": {\r\n    \"planSku\": \"PREMIUM_MONTHLY\",\r\n    \"autoRenew\": true,\r\n    \"paymentMethod\": \"CREDIT_CARD\"\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://{{apiId}}.execute-api.{{region}}.amazonaws.com/{{stage}}/api/v1/webhooks/subscriptions",
+					"protocol": "https",
+					"host": [
+						"{{apiId}}",
+						"execute-api",
+						"{{region}}",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"{{stage}}",
+						"api",
+						"v1",
+						"webhooks",
+						"subscriptions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST - Renew subscription",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"eventId\": \"evt_987654321\",\r\n  \"eventType\": \"subscription.renewed\",\r\n  \"timestamp\": \"2024-04-20T10:00:00Z\",\r\n  \"provider\": \"STRIPE\",\r\n  \"subscriptionId\": \"sub_456789\",\r\n  \"paymentId\": \"pm_654321\",\r\n  \"userId\": \"123\",\r\n  \"customerId\": \"cus_789012\",\r\n  \"expiresAt\": \"2024-05-20T10:00:00Z\",\r\n  \"metadata\": {\r\n    \"planSku\": \"PREMIUM_MONTHLY\",\r\n    \"autoRenew\": true,\r\n    \"paymentMethod\": \"CREDIT_CARD\"\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://{{apiId}}.execute-api.{{region}}.amazonaws.com/{{stage}}/api/v1/webhooks/subscriptions",
+					"protocol": "https",
+					"host": [
+						"{{apiId}}",
+						"execute-api",
+						"{{region}}",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"{{stage}}",
+						"api",
+						"v1",
+						"webhooks",
+						"subscriptions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST - Cancel subscription",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"eventId\": \"evt_456789123\",\r\n  \"eventType\": \"subscription.cancelled\",\r\n  \"timestamp\": \"2024-05-20T10:00:00Z\",\r\n  \"provider\": \"STRIPE\",\r\n  \"subscriptionId\": \"sub_456789\",\r\n  \"paymentId\": null,\r\n  \"userId\": \"123\",\r\n  \"customerId\": \"cus_789012\",\r\n  \"expiresAt\": \"2024-05-20T10:00:00Z\",\r\n  \"cancelledAt\": \"2024-05-20T10:00:00Z\",\r\n  \"metadata\": {\r\n    \"planSku\": \"PREMIUM_MONTHLY\",\r\n    \"autoRenew\": false,\r\n    \"paymentMethod\": \"CREDIT_CARD\",\r\n    \"cancelReason\": \"USER_REQUESTED\"\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://{{apiId}}.execute-api.{{region}}.amazonaws.com/{{stage}}/api/v1/webhooks/subscriptions",
+					"protocol": "https",
+					"host": [
+						"{{apiId}}",
+						"execute-api",
+						"{{region}}",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"{{stage}}",
+						"api",
+						"v1",
+						"webhooks",
+						"subscriptions"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET - User subscriptions",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "https://{{apiId}}.execute-api.{{region}}.amazonaws.com/{{stage}}/api/v1/subscriptions/{{userId}}",
+					"protocol": "https",
+					"host": [
+						"{{apiId}}",
+						"execute-api",
+						"{{region}}",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"{{stage}}",
+						"api",
+						"v1",
+						"subscriptions",
+						"{{userId}}"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "userId",
+			"value": ""
+		},
+		{
+			"key": "stage",
+			"value": ""
+		},
+		{
+			"key": "apiId",
+			"value": ""
+		},
+		{
+			"key": "region",
+			"value": ""
+		}
+	]
+}
