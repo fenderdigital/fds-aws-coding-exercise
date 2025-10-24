@@ -9,6 +9,7 @@ cd ../..
 
 cp -r app/node/node_modules .temp/package/
 cp -r app/node/src/. .temp/package/
+cp -r app/node/package.json .temp/package/
 
 cd .temp/package
 zip -r ../package.zip .

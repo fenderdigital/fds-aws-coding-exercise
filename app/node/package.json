@@ -4,6 +4,10 @@
   "description": "Node.js ",
   "license": "ISC",
   "author": "",
-  "type": "commonjs",
-  "main": "index.js"
+  "type": "module",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "3.913.0",
+    "@aws-sdk/lib-dynamodb": "3.913.0"
+  }
 }
