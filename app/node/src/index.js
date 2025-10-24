@@ -1,45 +1,38 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { DynamoDBDocumentClient, QueryCommand } from '@aws-sdk/lib-dynamodb'
 
-const client = new DynamoDBClient({
-    region: process.env.REGION
-})
+import { AppError } from './error.js';
+import { getUserSubscription } from './getHandler.js'
+import { httpWrapper } from './httpWrapper.js';
+import { postHandler } from './postHandler.js'
+const router = async (event) => {
 
-const ddb = DynamoDBDocumentClient.from(client, {marshallOptions: { convertClassInstanceToMap: true, removeUndefinedValues: true}})
-
-const TABLE_NAME = process.env.TABLE_NAME
-const createResponse = (statusCode, body) => ({
-    statusCode, body, headers: { "Content-Type": "application/json" },
-})
-
-exports.handler = async (event) => {
-    const userId = event?.pathParameters?.userId
-    if(!userId){
-        return createResponse(
-            400, {message: 'Missing UserId!'}
-        )
-    }
-    switch(event.httpMethod){
-        case 'GET':
-            try{
-                const params = {
-                    TableName: TABLE_NAME,
-                    KeyConditionExpression: "pk = :pk AND begins_with(sk, :skPrefix)",
-                    ExpressionAttributeValues:{
-                        ":pk": `user:${userId}`,
-                        ":skPrefix": "sub:"
-                    }
-                }
-                const result = await ddb.send(new QueryCommand(params))
-                return createResponse(200, result)
-            }catch(error){
-                return createResponse(500, {message: 'Internal server error'})
+    const method = (event.httpMethod || event.requestContext?.http?.method || "").toUpperCase();
+    //routes
+    switch(method){
+        case 'GET':{
+            const userId = event?.pathParameters?.userId
+            if(!userId){
+                throw new AppError(400, 'Missing UserId!')
             }
-        case 'POST':
-            
-            return
+            //controller
+            const response = await getUserSubscription(userId)
+            return response
+        }
+        case 'POST':{
+            const raw = event?.body ?? '';
+            const isB64 = !!event?.isBase64Encoded;
+            const text = isB64 ? Buffer.from(raw, 'base64').toString('utf8') : raw;
+
+            const parsedBody =  JSON.parse(text || '{}')
+            if(!parsedBody){
+                throw new AppError(400, 'Missing body!')
+            }
+            //controller
+            const result = await postHandler({eventType: parsedBody.eventType, parsedBody})
+            return result
+        }
         default:
-            return createResponse(405, {message: 'Method not allowed!'})
+            throw new AppError(405, 'Method not allowed!')
     }
 };
 
+export const handler = httpWrapper(router)
