@@ -1,0 +1,165 @@
+{
+  "info": {
+    "_postman_id": "6bd79d8a-2b00-4d2b-bd09-e46941f91906",
+    "name": "Fender",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "9398736"
+  },
+  "item": [
+    {
+      "name": "subscriptions",
+      "item": [
+        {
+          "name": "userId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/subscriptions/123",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "subscriptions", "123"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "webhooks",
+      "item": [
+        {
+          "name": "New Request",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"content\": \"dummy\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/webhooks/subscriptions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "webhooks", "subscriptions"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "E2E",
+      "item": [
+        {
+          "name": "createNewSubscription",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"eventId\": \"evt_123456789\",\n    \"eventType\": \"subscription.created\",\n    \"timestamp\": \"2024-03-20T10:00:00Z\",\n    \"provider\": \"STRIPE\",\n    \"subscriptionId\": \"sub_456789\",\n    \"paymentId\": \"pm_123456\",\n    \"userId\": \"123\",\n    \"customerId\": \"cus_789012\",\n    \"expiresAt\": \"2024-04-20T10:00:00Z\",\n    \"metadata\": {\n        \"planSku\": \"PREMIUM_MONTHLY\",\n        \"autoRenew\": true,\n        \"paymentMethod\": \"CREDIT_CARD\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/webhooks/subscriptions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "webhooks", "subscriptions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getNewSubscription",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/subscriptions/123",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "subscriptions", "123"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "renewSubscription",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"eventId\": \"evt_123456789\",\n    \"eventType\": \"subscription.renewed\",\n    \"timestamp\": \"2024-03-20T10:00:00Z\",\n    \"provider\": \"STRIPE\",\n    \"subscriptionId\": \"sub_456789\",\n    \"paymentId\": \"pm_123456\",\n    \"userId\": \"123\",\n    \"customerId\": \"cus_789012\",\n    \"expiresAt\": \"2024-04-20T10:00:00Z\",\n    \"metadata\": {\n        \"planSku\": \"PREMIUM_MONTHLY\",\n        \"autoRenew\": true,\n        \"paymentMethod\": \"CREDIT_CARD\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/webhooks/subscriptions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "webhooks", "subscriptions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getRenewSubscription",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/subscriptions/123",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "subscriptions", "123"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "cancelSubscription",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"eventId\": \"evt_123456789\",\n    \"eventType\": \"subscription.cancelled\",\n    \"timestamp\": \"2024-03-20T10:00:00Z\",\n    \"provider\": \"STRIPE\",\n    \"subscriptionId\": \"sub_456789\",\n    \"paymentId\": \"pm_123456\",\n    \"userId\": \"123\",\n    \"customerId\": \"cus_789012\",\n    \"expiresAt\": \"2024-04-20T10:00:00Z\",\n    \"metadata\": {\n        \"planSku\": \"PREMIUM_MONTHLY\",\n        \"autoRenew\": true,\n        \"paymentMethod\": \"CREDIT_CARD\"\n    }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/webhooks/subscriptions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "webhooks", "subscriptions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "getCancelSubscription",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/subscriptions/123",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "subscriptions", "123"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

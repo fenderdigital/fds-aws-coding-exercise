@@ -1,0 +1,58 @@
+[
+  {
+    "pk": "plan:XYZ123",
+    "sk": "metadata",
+    "type": "plan",
+    "name": "Basic Monthly Plan",
+    "price": 9.99,
+    "currency": "USD",
+    "billingCycle": "monthly",
+    "features": ["Access to basic features", "Email support"],
+    "status": "active",
+    "lastDateModified": "2024-06-10T12:00:00Z"
+  },
+  {
+    "pk": "plan:ABC456",
+    "sk": "metadata",
+    "type": "plan",
+    "name": "Pro Yearly Plan",
+    "price": 99.99,
+    "currency": "USD",
+    "billingCycle": "yearly",
+    "features": [
+      "Access to all features",
+      "Priority support",
+      "Monthly webinars"
+    ],
+    "status": "inactive",
+    "lastDateModified": "2024-05-15T08:30:00Z"
+  },
+  {
+    "pk": "plan:DEF789",
+    "sk": "metadata",
+    "type": "plan",
+    "name": "Enterprise Plan",
+    "price": 499.99,
+    "currency": "USD",
+    "billingCycle": "yearly",
+    "features": [
+      "Custom integrations",
+      "Dedicated account manager",
+      "24/7 support"
+    ],
+    "status": "active",
+    "lastDateModified": "2024-06-01T14:45:00Z"
+  },
+  {
+    "pk": "plan:GHI012",
+    "sk": "metadata",
+    "type": "plan",
+    "name": "Starter Plan",
+    "price": 4.99,
+    "currency": "USD",
+    "billingCycle": "monthly",
+    "features": ["Limited feature access", "Community support"],
+    "status": "active",
+    "lastDateModified": "2024-06-12T09:15:00Z"
+  }
+]
